@@ -1,6 +1,5 @@
 # Erasers
 
-___
 
 ## All | e
 
@@ -10,7 +9,7 @@ The command `e` erase the visible part of the screen
 
 The command `E` erase the whole scrollback buffer of the shell
 
----
+___
 
 ### Installers
 The next command will compile and move onto the path the generated binaries
@@ -26,11 +25,15 @@ comp=""; for c in clang gcc cl cc; do type -p "$c" >/dev/null && comp=$(type -p 
 ```
 
 - Zsh
-```zsh
+```bash
 comp=""; for c in clang gcc cl cc; do command -v "$c" >/dev/null && comp=$(command -v "$c") && break; done; if [ -z "$comp" ] && [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then for p in "/c/Program Files/Microsoft Visual Studio"/*/*"/VC/Tools/MSVC"/*"/bin/Hostx64/x64/cl.exe"; do [ -f "$p" ] && comp="$p" && break; done; fi; if [ -z "$comp" ]; then echo "No compiler found"; else c_name=$(basename "$comp" | tr '[:upper:]' '[:lower:]' | sed 's/\.exe//'); typeset -A files=( "EraseAll.c" "e" "ErasePurge.c" "E" ); if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then t_dir="/c/Windows/System32"; ext=".exe"; s_cmd=""; else t_dir="/bin"; ext=""; s_cmd="sudo"; fi; for f in ${(k)files}; do b="${files[$f]}$ext"; echo "Compiling $f..."; if [ "$c_name" = "cl" ]; then "$comp" /O2 /nologo "$f" /Fe:"$b" && rm -f "${f%.c}.obj"; else "$comp" -O3 "$f" -o "$b"; fi; [ -f "$b" ] && ($s_cmd mv "$b" "$t_dir/$b" 2>/dev/null && { [[ "$ext" == "" ]] && $s_cmd chmod +x "$t_dir/$b"; echo "Moved $b to $t_dir"; } || echo "Permission denied for $t_dir. Run the terminal as Admin or check sudo privileges."); done; fi
 ```
+- Fish
+```fish
+set -l comp ""; for c in clang gcc cl cc; command -v "$c" >/dev/null; and set comp (command -v "$c"); and break; end; if test -z "$comp"; and string match -qr "msys|cygwin" "$OSTYPE"; for p in "/c/Program Files/Microsoft Visual Studio"/*/*/VC/Tools/MSVC/*/bin/Hostx64/x64/cl.exe; test -f "$p"; and set comp "$p"; and break; end; end; if test -z "$comp"; echo "No compiler found"; else; set -l c_name (basename "$comp" | tr '[:upper:]' '[:lower:]' | string replace ".exe" ""); set -l pairs "EraseAll.c:e" "ErasePurge.c:E"; if string match -qr "msys|cygwin" "$OSTYPE"; set t_dir "/c/Windows/System32"; set ext ".exe"; set s_cmd ""; else; set t_dir "/bin"; set ext ""; set s_cmd "sudo"; end; for pair in $pairs; set -l parts (string split ":" $pair); set -l f $parts[1]; set -l b "$parts[2]$ext"; echo "Compiling $f..."; if test "$c_name" = "cl"; eval "$comp" /O2 /nologo "$f" /Fe:"$b"; and rm -f (string replace ".c" ".obj" $f); else; eval "$comp" -O3 "$f" -o "$b"; end; if test -f "$b"; if test -n "$s_cmd"; eval "$s_cmd" mv "$b" "$t_dir/$b" >/dev/null; and eval "$s_cmd" chmod +x "$t_dir/$b"; else; mv "$b" "$t_dir/$b" >/dev/null; end; and echo "Moved $b to $t_dir"; or echo "Permission denied for $t_dir. Run terminal as Admin or check sudo privileges."; end; end; end
+```
 
-- CMD
+- CMD | With privileges
 ```cmd
 @echo off & set "comp=" & for %c in (clang.exe gcc.exe cl.exe cc.exe) do (where %c >nul 2>nul && for /f "delims=" %i in ('where %c') do set "comp=%i") & if not defined comp (for /r "C:\Program Files\Microsoft Visual Studio" %p in (cl.exe) do if exist "%p" set "comp=%p") & if not defined comp (echo No compiler found) else (for %a in ("EraseAll.c:e" "ErasePurge.c:E") do (for /f "tokens=1,2 delims=:" %f in (%a) do (echo Compiling %f... & if "x%~nxb"=="xcl.exe" ("%comp%" /O2 /nologo "%f" /Fe:"%g.exe" & del /q "%~nf.obj" >nul 2>nul) else ("%comp%" -O3 "%f" -o "%g.exe") & if exist "%g.exe" (move /y "%g.exe" "C:\Windows\System32\%g.exe" >nul 2>nul && echo Moved %g.exe to System32 || echo Permission denied. Please run CMD as Administrator.))))
 ```
